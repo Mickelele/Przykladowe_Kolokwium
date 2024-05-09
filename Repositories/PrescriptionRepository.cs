@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 using PrzykladoweKolokwium.Models;
 
 namespace PrzykladoweKolokwium.Repositories;
@@ -16,25 +17,38 @@ public class PrescriptionRepository
 
 
 
-    public async Task<IEnumerable<ReturnReceptType>> getReciepts(string nazwisko)
+    public async Task<IEnumerable<ReturnReceptType>> getReciepts(string? nazwisko)
     {
         List<ReturnReceptType> result = new List<ReturnReceptType>();
         string query = "";
         
-        if (nazwisko == null)
+        
+        if (string.IsNullOrEmpty(nazwisko))
         {
-            query = "SELECT Prescription.IdPrescription,  Prescription.[Date], Prescription.[DueDate], Patient.LastName AS PatientLastName, Doctor.LastName AS DoctorLastName FROM Prescription\nJOIN Patient ON Patient.IdPatient = Prescription.IdPatient\nJOIN Doctor ON Doctor.IdDoctor = Prescription.IdDoctor";
+            query = @"SELECT Prescription.IdPrescription, Prescription.[Date], Prescription.[DueDate], 
+                          Patient.LastName AS PatientLastName, Doctor.LastName AS DoctorLastName 
+                   FROM Prescription
+                   JOIN Patient ON Patient.IdPatient = Prescription.IdPatient
+                   JOIN Doctor ON Doctor.IdDoctor = Prescription.IdDoctor";
         }
-
         else
         {
-            query =
-                "SELECT Prescription.IdPrescription,  Prescription.[Date], Prescription.[DueDate], Patient.LastName AS PatientLastName, Doctor.LastName AS DoctorLastName FROM Prescription JOIN Patient ON Patient.IdPatient = Prescription.IdPatient JOIN Doctor ON Doctor.IdDoctor = Prescription.IdDoctor WHERE Doctor.LastName LIKE @nazwisko";
+            query = @"SELECT Prescription.IdPrescription, Prescription.[Date], Prescription.[DueDate], 
+                          Patient.LastName AS PatientLastName, Doctor.LastName AS DoctorLastName 
+                   FROM Prescription 
+                   JOIN Patient ON Patient.IdPatient = Prescription.IdPatient 
+                   JOIN Doctor ON Doctor.IdDoctor = Prescription.IdDoctor 
+                   WHERE Doctor.LastName LIKE @Nazwisko";
         }
-
+        
         await using var connection = new SqlConnection(_connectionString);
         await using var command = new SqlCommand(query, connection);
-        command.Parameters.AddWithValue("@nazwisko", nazwisko);
+        if (!string.IsNullOrEmpty(nazwisko))
+        {
+            command.Parameters.AddWithValue("@Nazwisko", $"%{nazwisko}%");
+        }
+        
+        
 
         await connection.OpenAsync();
         await using var reader = await command.ExecuteReaderAsync();

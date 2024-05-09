@@ -19,7 +19,7 @@ public class PrescriptionController : ControllerBase
     
     
     [HttpGet]
-    public async Task<IActionResult> getReciepts(string nazwisko = null)
+    public async Task<IActionResult> getReciepts(string? nazwisko = null)
     {
         var result =  await _prescriptionRepository.getReciepts(nazwisko);
         return Ok(result);
