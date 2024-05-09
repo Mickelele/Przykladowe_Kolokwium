@@ -1,0 +1,1 @@
+# Przykladowe_Kolokwium
